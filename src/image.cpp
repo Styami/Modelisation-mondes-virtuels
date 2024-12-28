@@ -35,7 +35,7 @@ void Image::load(const std::string& filename) {
         for (int x = 0; x < width; x++) {
             glm::vec3 color;
             for (int z = 0; z < nbChannel; z++) {
-                color[z] = static_cast<double>(res[z + x * nbChannel + y * width]);
+                color[z] = static_cast<double>(res[z + x * nbChannel + y * width * nbChannel]);
             }
             data[x + y * width] = color;
         }
@@ -47,20 +47,19 @@ const glm::vec3& Image::operator[](const int x, const int y) {
 }
 
 void Image::save(const std::string& filename) {
-    int channelsInImageChar = 4;
-    unsigned char* imageChar = new unsigned char[width * heigth * (channelsInImageChar)];
+    unsigned char* imageChar = new unsigned char[width * heigth * (nbChannel)];
     for (int x = 0; x < width; x++) {
         for (int y = 0; y < heigth; y++) {
-            for (int z = 0; z < channelsInImageChar; z++) {
+            for (int z = 0; z < nbChannel; z++) {
                 if (z == 3) {
-                    imageChar[z + x * channelsInImageChar + (y * width * channelsInImageChar)] = static_cast<unsigned char>(255); 
+                    imageChar[z + x * nbChannel + (y * width * nbChannel)] = static_cast<unsigned char>(255); 
                     continue;
                 }
-                imageChar[z + x * channelsInImageChar + (y * width * channelsInImageChar)] = static_cast<unsigned char>((*this)[x, y][z]);
+                imageChar[z + x * nbChannel + (y * width * nbChannel)] = static_cast<unsigned char>((*this)[x, y][z]);
             }
         }
     }
-    stbi_write_png(filename.c_str(), width, heigth, channelsInImageChar, imageChar, width * channelsInImageChar);
+    stbi_write_png(filename.c_str(), width, heigth, nbChannel, imageChar, width * nbChannel);
     delete [] imageChar;
 }
 
