@@ -42,11 +42,11 @@ void Image::load(const std::string& filename) {
     }
     delete res;
 }
-const glm::vec3& Image::operator[](const int x, const int y) {
+const glm::vec3& Image::operator[](const int x, const int y) const {
     return data[x + y * width];
 }
 
-void Image::save(const std::string& filename) {
+void Image::save(const std::string& filename) const {
     unsigned char* imageChar = new unsigned char[width * heigth * (nbChannel)];
     for (int x = 0; x < width; x++) {
         for (int y = 0; y < heigth; y++) {

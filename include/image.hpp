@@ -14,8 +14,8 @@ class Image {
         Image(const std::string& filename);
         ~Image();
         void load(const std::string& filename);
-        void save(const std::string& filename);
-        const glm::vec3& operator[](const int x, const int y);
+        void save(const std::string& filename) const;
+        const glm::vec3& operator[](const int x, const int y) const;
         int getWidth() const;
         int getHeigth() const;
         int getChannels() const;
