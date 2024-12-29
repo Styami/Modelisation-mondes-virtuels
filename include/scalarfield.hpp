@@ -7,6 +7,8 @@ class ScalarField {
     public:
         ScalarField(const std::string& filename);
         void save(const std::string& filename);
+        Image gradient() const;
+        Image laplacian() const;
     private:
         Image image;
 };

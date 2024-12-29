@@ -3,6 +3,8 @@
 
 int main() {
     ScalarField scalarfield = ScalarField("data/heightmapper.png");
-    scalarfield.save("data/test.png");   
+    Image gradient = scalarfield.laplacian();
+    gradient.save("data/testGrad.png");
+    // scalarfield.save("data/test.png");   
     return 0;
 }

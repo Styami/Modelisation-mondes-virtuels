@@ -1,4 +1,5 @@
 #include "image.hpp"
+#include <cassert>
 #include <vector>
 
 Image::Image() :
@@ -7,6 +8,18 @@ Image::Image() :
     nbChannel(0),
     data(nullptr)
 {}
+
+Image::Image(const int width, const int heigth) :
+    width(width),
+    heigth(heigth),
+    nbChannel(3),
+    data(new glm::vec3 [width * heigth])
+{
+    for (int y = 0; y < heigth; y++)
+    for (int x = 0; x < width; x++) {
+        setData(x, y, {0, 0, 0});
+    }
+}
 
 Image::Image(const Image& image) :
     width(image.width),
@@ -42,9 +55,7 @@ void Image::load(const std::string& filename) {
     }
     delete res;
 }
-const glm::vec3& Image::operator[](const int x, const int y) const {
-    return data[x + y * width];
-}
+
 
 void Image::save(const std::string& filename) const {
     unsigned char* imageChar = new unsigned char[width * heigth * (nbChannel)];
@@ -66,23 +77,10 @@ void Image::save(const std::string& filename) const {
 
 
 
-int Image::getWidth() const {
-    return width;
-}
-
-
-int Image::getHeigth() const {
-    return heigth;
-}
-
-
-int Image::getChannels() const {
-    return nbChannel;
-}
-
-
-const glm::vec3* Image::getData() const {
-    return data;
+void Image::setData(const int x, const int y, const glm::vec3& pixel) {
+    assert(x >= 0 && x < width);
+    assert(y >= 0 && y < heigth);
+    data[x + y * width] = pixel;
 }
 
 Image::~Image() {
