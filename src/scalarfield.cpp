@@ -34,9 +34,9 @@ Image&& ScalarField::scaleData(const std::vector<float>& pixels, Image& res) con
 }
 
 Image ScalarField::gradient() const {
-    glm::mat3 gradY = glm::mat3(0, -1, 0,
+    glm::mat3 gradY = glm::mat3(-1, 0, 1,
                     -1, 0, 1,
-                    0, 1, 0
+                    -1, 0, 1
     );
     glm::mat3 gradX = glm::mat3(-1, -1, -1,
                     0, 0, 0,
@@ -115,5 +115,31 @@ Image ScalarField::blur() const {
 
     Image res = scaleData(pixels, tmp);
     return res;
+}
+
+Image ScalarField::smooth() const {
+    glm::mat3 smooth = glm::mat3(1, 1, 1,
+                                    2, 2, 2,
+                                    3, 3, 3
+    );
+
+    Image tmp(image.getWidth(), image.getHeigth());
+    std::vector<float> pixels;
+    pixels.resize(image.getHeigth() * image.getWidth());
+
+    for (int y = 1; y < image.getHeigth() - 1; y++) 
+        for(int x = 1; x < image.getWidth() - 1; x++) {
+            glm::vec3 newColor(0, 0, 0);
+            for (int i = x - 1; i <= x + 1; i++)
+                for (int j = y - 1; j <= y + 1; j++) {
+                    newColor += image[i, j] * smooth[i - (x - 1)][j - (y - 1)];
+                }
+                
+            pixels.push_back(newColor[0]);
+            tmp.setData(x, y, newColor);
+        }
+
+    Image res = scaleData(pixels, tmp);
+    return tmp;
 }
 
