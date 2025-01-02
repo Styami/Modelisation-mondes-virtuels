@@ -24,9 +24,14 @@ Image::Image(const int width, const int heigth) :
 Image::Image(const Image& image) :
     width(image.width),
     heigth(image.heigth),
-    nbChannel(image.nbChannel),
-    data(image.data)
-{}
+    nbChannel(image.nbChannel)
+{
+    data = new glm::vec3 [width * heigth];
+    for (int y = 0; y < heigth; y++)
+    for (int x = 0; x < width; x++) {
+        setData(x, y, image[x, y]);
+    }
+}
 
 Image::Image(const std::string& filename) {
     load(filename);
@@ -53,14 +58,14 @@ void Image::load(const std::string& filename) {
             data[x + y * width] = color;
         }
     }
-    delete res;
+    stbi_image_free(res);
 }
 
 
 void Image::save(const std::string& filename) const {
     unsigned char* imageChar = new unsigned char[width * heigth * (nbChannel)];
     for (int x = 0; x < width; x++) {
-        for (int y = 0; y < heigth; y++) {
+        for (int y = 0; y < heigth; y++) 
             for (int z = 0; z < nbChannel; z++) {
                 if (z == 3) {
                     imageChar[z + x * nbChannel + (y * width * nbChannel)] = static_cast<unsigned char>(255); 
@@ -68,7 +73,7 @@ void Image::save(const std::string& filename) const {
                 }
                 imageChar[z + x * nbChannel + (y * width * nbChannel)] = static_cast<unsigned char>((*this)[x, y][z]);
             }
-        }
+        
     }
     stbi_write_png(filename.c_str(), width, heigth, nbChannel, imageChar, width * nbChannel);
     delete [] imageChar;
