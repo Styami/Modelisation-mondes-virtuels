@@ -24,13 +24,22 @@ void ScalarField::save(const std::string& filename) {
     image.save(filename);
 }
 
-Image&& ScalarField::scaleData(const std::vector<float>& pixels, Image& res) const {
+Image&& ScalarField::normalize(const std::vector<float>& pixels, Image& image) const {
     auto [min, max] = std::minmax_element(pixels.begin(), pixels.end());
-    for (int j = 0; j < res.getHeigth(); j++)
-        for (int i = 0; i < res.getWidth(); i++) {
-            res.setData(i, j, glm::vec3(255) * (res[i, j] - *min)/(*max - *min));
+    for (int j = 0; j < image.getHeigth(); j++)
+        for (int i = 0; i < image.getWidth(); i++) {
+            image.setData(i, j, glm::vec3(255) * (image[i, j] - *min)/(*max - *min));
         }
-    return std::move(res);
+    return std::move(image);
+}
+
+Image&& ScalarField::clamp(Image& image, int valueMin) const {
+    for (int j = 0; j < image.getHeigth(); j++)
+        for (int i = 0; i < image.getWidth(); i++) {
+            if(image[i, j][0] < valueMin)
+                image.setData(i, j, glm::vec3(0));
+        }
+    return std::move(image);
 }
 
 Image ScalarField::gradient() const {
@@ -61,7 +70,7 @@ Image ScalarField::gradient() const {
             pixels.push_back(gradient[0]);
             tmp.setData(x, y,  gradient);
         }
-    Image res = scaleData(pixels, tmp);
+    Image res = normalize(pixels, tmp);
     return res;
 }
 
@@ -87,7 +96,7 @@ Image ScalarField::laplacian() const {
             tmp.setData(x, y, newColor);
         }
 
-    Image res = scaleData(pixels, tmp);
+    Image res = normalize(pixels, tmp);
     return res;
 }
 
@@ -113,7 +122,7 @@ Image ScalarField::blur() const {
             tmp.setData(x, y, newColor);
         }
 
-    Image res = scaleData(pixels, tmp);
+    Image res = normalize(pixels, tmp);
     return res;
 }
 
@@ -139,7 +148,7 @@ Image ScalarField::smooth() const {
             tmp.setData(x, y, newColor);
         }
 
-    Image res = scaleData(pixels, tmp);
+    Image res = normalize(pixels, tmp);
     return tmp;
 }
 
