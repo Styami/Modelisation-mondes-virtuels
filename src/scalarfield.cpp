@@ -118,9 +118,9 @@ Image ScalarField::blur() const {
 }
 
 Image ScalarField::smooth() const {
-    glm::mat3 smooth = glm::mat3(1, 1, 1,
+    glm::mat3 smooth = (1/21.f) * glm::mat3(1, 1, 1,
                                     2, 2, 2,
-                                    3, 3, 3
+                                    4, 4, 4
     );
 
     Image tmp(image.getWidth(), image.getHeigth());
