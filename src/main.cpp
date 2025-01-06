@@ -1,11 +1,11 @@
 #include <iostream>
-#include "scalarfield.hpp"
+#include "heightField.hpp"
 
 int main() {
-    ScalarField scalarfield = ScalarField("data/render.png");
-    ScalarField scalarSmooth = ScalarField(scalarfield.smooth());
+    HeightField heightfield = HeightField("data/render.png", glm::vec3(0, 0, 0), glm::vec3(10, 10, 100));
+    Image slope = heightfield.slope();
     // Image scalarGradBlur = scalarGrad.blur();
-    scalarSmooth.save("data/Smooth.png");
+    slope.save("data/slop.png");
     // scalarfield.save("data/test.png");   
     return 0;
 }

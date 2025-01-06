@@ -24,17 +24,16 @@ void ScalarField::save(const std::string& filename) {
     image.save(filename);
 }
 
-Image&& ScalarField::normalize(const std::vector<float>& pixels, Image& image) const {
+void ScalarField::normalize(const std::vector<float>& pixels, Image& image) const {
     auto [min, max] = std::minmax_element(pixels.begin(), pixels.end());
-    for (int j = 0; j < image.getHeigth(); j++)
+    for (int j = 0; j < image.getHeight(); j++)
         for (int i = 0; i < image.getWidth(); i++) {
             image.setData(i, j, glm::vec3(255) * (image[i, j] - *min)/(*max - *min));
         }
-    return std::move(image);
 }
 
 Image&& ScalarField::clamp(Image& image, int valueMin) const {
-    for (int j = 0; j < image.getHeigth(); j++)
+    for (int j = 0; j < image.getHeight(); j++)
         for (int i = 0; i < image.getWidth(); i++) {
             if(image[i, j][0] < valueMin)
                 image.setData(i, j, glm::vec3(0));
@@ -52,11 +51,11 @@ Image ScalarField::gradient() const {
                     1, 1, 1
     );
 
-    Image tmp(image.getWidth(), image.getHeigth());
+    Image tmp(image.getWidth(), image.getHeight());
     std::vector<float> pixels;
-    pixels.resize(image.getHeigth() * image.getWidth());
+    pixels.resize(image.getHeight() * image.getWidth());
 
-    for (int y = 1; y < image.getHeigth() - 1; y++) 
+    for (int y = 1; y < image.getHeight() - 1; y++) 
         for(int x = 1; x < image.getWidth() - 1; x++) {
             glm::vec3 newColorX(0, 0, 0);
             glm::vec3 newColorY(0, 0, 0);
@@ -70,8 +69,8 @@ Image ScalarField::gradient() const {
             pixels.push_back(gradient[0]);
             tmp.setData(x, y,  gradient);
         }
-    Image res = normalize(pixels, tmp);
-    return res;
+    normalize(pixels, tmp);
+    return tmp;
 }
 
 Image ScalarField::laplacian() const {
@@ -80,11 +79,11 @@ Image ScalarField::laplacian() const {
                                     0, 1, 0
     );
 
-    Image tmp(image.getWidth(), image.getHeigth());
+    Image tmp(image.getWidth(), image.getHeight());
     std::vector<float> pixels;
-    pixels.resize(image.getHeigth() * image.getWidth());
+    pixels.resize(image.getHeight() * image.getWidth());
 
-    for (int y = 1; y < image.getHeigth() - 1; y++) 
+    for (int y = 1; y < image.getHeight() - 1; y++) 
         for(int x = 1; x < image.getWidth() - 1; x++) {
             glm::vec3 newColor(0, 0, 0);
             for (int i = x - 1; i <= x + 1; i++)
@@ -96,8 +95,8 @@ Image ScalarField::laplacian() const {
             tmp.setData(x, y, newColor);
         }
 
-    Image res = normalize(pixels, tmp);
-    return res;
+    normalize(pixels, tmp);
+    return tmp;
 }
 
 Image ScalarField::blur() const {
@@ -106,11 +105,11 @@ Image ScalarField::blur() const {
                                     1, 1, 1
     );
 
-    Image tmp(image.getWidth(), image.getHeigth());
+    Image tmp(image.getWidth(), image.getHeight());
     std::vector<float> pixels;
-    pixels.resize(image.getHeigth() * image.getWidth());
+    pixels.resize(image.getHeight() * image.getWidth());
 
-    for (int y = 1; y < image.getHeigth() - 1; y++) 
+    for (int y = 1; y < image.getHeight() - 1; y++) 
         for(int x = 1; x < image.getWidth() - 1; x++) {
             glm::vec3 newColor(0, 0, 0);
             for (int i = x - 1; i <= x + 1; i++)
@@ -122,8 +121,8 @@ Image ScalarField::blur() const {
             tmp.setData(x, y, newColor);
         }
 
-    Image res = normalize(pixels, tmp);
-    return res;
+    normalize(pixels, tmp);
+    return tmp;
 }
 
 Image ScalarField::smooth() const {
@@ -132,11 +131,11 @@ Image ScalarField::smooth() const {
                                     4, 4, 4
     );
 
-    Image tmp(image.getWidth(), image.getHeigth());
+    Image tmp(image.getWidth(), image.getHeight());
     std::vector<float> pixels;
-    pixels.resize(image.getHeigth() * image.getWidth());
+    pixels.resize(image.getHeight() * image.getWidth());
 
-    for (int y = 1; y < image.getHeigth() - 1; y++) 
+    for (int y = 1; y < image.getHeight() - 1; y++) 
         for(int x = 1; x < image.getWidth() - 1; x++) {
             glm::vec3 newColor(0, 0, 0);
             for (int i = x - 1; i <= x + 1; i++)
@@ -148,7 +147,7 @@ Image ScalarField::smooth() const {
             tmp.setData(x, y, newColor);
         }
 
-    Image res = normalize(pixels, tmp);
+    normalize(pixels, tmp);
     return tmp;
 }
 

@@ -15,9 +15,8 @@ class ScalarField {
         Image blur() const;
         Image smooth() const;
     protected:
-        Image&& normalize(const std::vector<float>& pixels, Image& image) const;
+        void normalize(const std::vector<float>& pixels, Image& image) const;
         Image&& clamp(Image& image, int valueMin) const;
-    private:
         Image image;
 };
 
