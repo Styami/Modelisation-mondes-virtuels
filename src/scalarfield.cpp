@@ -1,11 +1,5 @@
 #include "scalarfield.hpp"
-#include "image.hpp"
 #include <algorithm>
-#include <cstdio>
-#include <glm/exponential.hpp>
-#include <glm/geometric.hpp>
-#include <iostream>
-#include <vector>
 
 ScalarField::ScalarField(const std::string& filename) :
     image(filename)
@@ -65,7 +59,7 @@ Image ScalarField::gradient() const {
                     newColorY += image[i, j] * gradY[i - (x - 1)][j - (y - 1)];
                 }
             
-            glm::vec3 gradient = glm::sqrt(newColorX * newColorX + newColorY * newColorX) ;
+            glm::vec3 gradient = glm::sqrt(newColorX * newColorX + newColorY * newColorY) ;
             pixels.push_back(gradient[0]);
             tmp.setData(x, y,  gradient);
         }
