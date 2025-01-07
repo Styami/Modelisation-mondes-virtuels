@@ -68,7 +68,7 @@ Image ScalarField::normGradient() const {
     return tmp;
 }
 
-glm::vec3 ScalarField::gradient(const int x, const int y) const {
+glm::vec2 ScalarField::gradient(const int x, const int y) const {
     glm::mat3 gradY = glm::mat3(-1, 0, 1,
                     -1, 0, 1,
                     -1, 0, 1
@@ -88,7 +88,7 @@ glm::vec3 ScalarField::gradient(const int x, const int y) const {
             valueY += image[i, j][0] * gradY[i - (x - 1)][j - (y - 1)];
         }
     }
-    return glm::normalize(glm::vec3(valueX, valueY, -1));
+    return glm::normalize(glm::vec2(valueX, valueY));
 }
 
 Image ScalarField::laplacian() const {

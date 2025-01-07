@@ -9,7 +9,7 @@ class HeightField : public ScalarField {
         HeightField(const Image& image, const glm::vec3& min, const glm::vec3& max);
         HeightField(HeightField&& heightField);
         float height(const float x, const float y) const;
-        float averageSlope(const float x, const float y) const;
+        float averageSlope(const int x, const int y) const;
         Image slope() const;
         float heightGrid(const int x, const int y) const;
     private:

@@ -1,4 +1,5 @@
 #include "heightField.hpp"
+#include <glm/exponential.hpp>
 #include <linux/limits.h>
 
 HeightField::HeightField(const std::string& filename, const glm::vec3& min, const glm::vec3& max) :
@@ -79,21 +80,17 @@ Image HeightField::slope() const {
     return normGradient();
 }
 
-float HeightField::averageSlope(const float x, const float y) const {
-    float diff = 0;
-    float sumAlt = 0;
-                 
-    for (float i = x - 1; i <= x + 1; i++) {
-        for (float j = y - 1; j <= y + 1; j++) {
-            if(i <= 0 || j <= 0 || i > sizeX || j > sizeY) continue;
-            if(i == x && j == y) {
-                sumAlt += height(i, j);
-                continue;      
-            }
-            sumAlt += height(i, j);
-            diff += (height(i, j) - height(x, y)) / glm::distance(glm::vec2(i, j), glm::vec2(x, y));
-
+float HeightField::averageSlope(const int x, const int y) const {
+    int nbPixInImage = 0;
+    float res = 0;
+    for (int j = y - 1; j <= y + 1; j++) {
+        if (j < 0 || j > image.getHeight()) continue;
+        for (int i = x - 1; i <= x + 1; i++) {
+            if(i < 0 || i > image.getWidth()) continue;
+            nbPixInImage++;
+            glm::vec2 grad = gradient(i, j);
+            res += glm::sqrt(grad.x * grad.x + grad.y * grad.y);
         }
     }
-    return diff / sumAlt;
+    return res / nbPixInImage;
 }
