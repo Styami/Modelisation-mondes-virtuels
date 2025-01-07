@@ -1,5 +1,6 @@
 #include "scalarfield.hpp"
 #include <algorithm>
+#include <glm/geometric.hpp>
 
 ScalarField::ScalarField(const std::string& filename) :
     image(filename)
@@ -65,6 +66,29 @@ Image ScalarField::normGradient() const {
         }
     normalize(pixels, tmp);
     return tmp;
+}
+
+glm::vec3 ScalarField::gradient(const int x, const int y) const {
+    glm::mat3 gradY = glm::mat3(-1, 0, 1,
+                    -1, 0, 1,
+                    -1, 0, 1
+    );
+    glm::mat3 gradX = glm::mat3(-1, -1, -1,
+                    0, 0, 0,
+                    1, 1, 1
+    );
+
+    float valueX = 0;
+    float valueY = 0;
+    for (int j = y - 1; j <= y + 1; j++) {
+        if(j < 0 || j > image.getHeight()) continue;
+        for (int i = x - 1; i <= x + 1; i++) {
+            if(i < 0 || i > image.getWidth()) continue;
+            valueX += image[i, j][0] * gradX[i - (x - 1)][j - (y - 1)];
+            valueY += image[i, j][0] * gradY[i - (x - 1)][j - (y - 1)];
+        }
+    }
+    return glm::normalize(glm::vec3(valueX, valueY, -1));
 }
 
 Image ScalarField::laplacian() const {
