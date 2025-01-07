@@ -10,7 +10,7 @@ class ScalarField {
         ScalarField(const Image& image);
         ScalarField(ScalarField&& scalarfield);
         void save(const std::string& filename);
-        Image gradient() const;
+        Image normGradient() const;
         Image laplacian() const;
         Image blur() const;
         Image smooth() const;

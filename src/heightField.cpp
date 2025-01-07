@@ -1,13 +1,5 @@
 #include "heightField.hpp"
-#include "image.hpp"
-#include "scalarfield.hpp"
-#include <algorithm>
-#include <array>
-#include <cassert>
-#include <glm/fwd.hpp>
-#include <glm/geometric.hpp>
-#include <vector>
-
+#include <linux/limits.h>
 
 HeightField::HeightField(const std::string& filename, const glm::vec3& min, const glm::vec3& max) :
     ScalarField(filename),
@@ -84,18 +76,7 @@ float HeightField::height(const float x, const float y) const {
 }
 
 Image HeightField::slope() const {
-    Image res(sizeX, sizeY);
-    std::vector<float> pixels;
-    pixels.resize(sizeX * sizeY);
-    for (int j = 0; j < sizeY; j++)
-        for(int i = 0; i < sizeX; i++) {
-            pixels[i + sizeX * j] = averageSlope(i, j);
-            // pixels[i + sizeX * j] = 255.0;
-            
-        }
-    normalize(pixels, res);
-    // ScalarField slope = ScalarField();
-    return res;
+    return normGradient();
 }
 
 float HeightField::averageSlope(const float x, const float y) const {
@@ -104,9 +85,7 @@ float HeightField::averageSlope(const float x, const float y) const {
                  
     for (float i = x - 1; i <= x + 1; i++) {
         for (float j = y - 1; j <= y + 1; j++) {
-            float a = 0;
-            float b = 0;
-            if(i < minMap.x || j < minMap.y || i > maxMap.x || j > maxMap.y) continue;
+            if(i <= 0 || j <= 0 || i > sizeX || j > sizeY) continue;
             if(i == x && j == y) {
                 sumAlt += height(i, j);
                 continue;      

@@ -35,7 +35,7 @@ Image&& ScalarField::clamp(Image& image, int valueMin) const {
     return std::move(image);
 }
 
-Image ScalarField::gradient() const {
+Image ScalarField::normGradient() const {
     glm::mat3 gradY = glm::mat3(-1, 0, 1,
                     -1, 0, 1,
                     -1, 0, 1

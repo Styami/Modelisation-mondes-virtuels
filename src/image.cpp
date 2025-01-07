@@ -99,7 +99,9 @@ void Image::save(const std::string& filename) const {
                     imageChar[z + x * nbChannel + (y * width * nbChannel)] = static_cast<unsigned char>(255); 
                     continue;
                 }
-                imageChar[z + x * nbChannel + (y * width * nbChannel)] = static_cast<unsigned char>((*this)[x, y][z]);
+                float tmpf = (*this)[x, y][z];
+                unsigned char tmp = static_cast<unsigned char>(tmpf);
+                imageChar[z + x * nbChannel + (y * width * nbChannel)] = tmp;
             }
         
     }
