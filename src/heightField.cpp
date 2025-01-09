@@ -1,6 +1,4 @@
 #include "heightField.hpp"
-#include <glm/exponential.hpp>
-#include <linux/limits.h>
 
 HeightField::HeightField(const std::string& filename, const glm::vec3& min, const glm::vec3& max) :
     ScalarField(filename),
@@ -55,17 +53,8 @@ float HeightField::height(const float x, const float y) const {
 
     float nuInt;
     u = std::modf(nu, &nuInt);
-
-
     float nvInt;
     v = std::modf(nv, &nvInt); 
-
-    // permet de connaître la coordonnée local dans la cellule de la grille
-    // u = u - nu * (maxMap.x - minMap.x) / sizeX;
-    // v = v - nv * (maxMap.y - minMap.y) / sizeY;
-
-    // u = std::clamp(u, 0.f, 1.f);
-    // v = std::clamp(v, 0.f, 1.f);
 
     // interpolation bilinéaire
     float res = 0;

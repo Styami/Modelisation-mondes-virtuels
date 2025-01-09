@@ -5,5 +5,5 @@ project('MMV',
         )
 subdir('src')
 includeDir = include_directories('include')
-glm = [dependency('glm'), dependency('stb')]
-executable('mmv', sources, include_directories: includeDir, dependencies: glm)
+dep = [dependency('glm'), dependency('stb')]
+executable('mmv', sources, include_directories: includeDir, dependencies: dep)

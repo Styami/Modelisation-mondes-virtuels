@@ -2,8 +2,6 @@
 #define __IMAGE__
 #include <string>
 #include <vector>
-#include "stb_image.h"
-#include "stb_image_write.h"
 #include "glm/glm.hpp"
 
 

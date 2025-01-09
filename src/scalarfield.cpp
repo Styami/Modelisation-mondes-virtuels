@@ -1,6 +1,9 @@
 #include "scalarfield.hpp"
 #include <algorithm>
+#include <cmath>
+#include <functional>
 #include <glm/geometric.hpp>
+#include <utility>
 
 ScalarField::ScalarField(const std::string& filename) :
     image(filename)
@@ -118,7 +121,7 @@ Image ScalarField::laplacian() const {
 }
 
 Image ScalarField::blur() const {
-        glm::mat3 laplacianKer = glm::mat3(1, 1, 1,
+        glm::mat3 laplacianKer = (1 / 9.0f) * glm::mat3(1, 1, 1,
                                     1, 1, 1,
                                     1, 1, 1
     );
@@ -169,3 +172,79 @@ Image ScalarField::smooth() const {
     return tmp;
 }
 
+Image ScalarField::streamArea(const int powStreamArea) const {
+    Image streamArea(image.getWidth(), 
+        image.getHeight(),
+        3,
+        std::vector<glm::vec3>(image.getWidth() * image.getHeight(), glm::vec3(1)));
+    int indiceTab = 0;
+    using coordonne = std::pair<int, int>;
+    std::function<coordonne(int)>  getCoord = [this](const int i) {
+        int x = i % image.getWidth();
+        int y = (i - x) / image.getWidth();
+        return std::make_pair(x, y);
+    };
+    std::vector<std::pair<float, coordonne>> pixels(image.getData().size()); 
+    std::transform(image.getData().begin(), image.getData().end(), pixels.begin(),
+                                [&indiceTab, getCoord](const glm::vec3& pixel) {
+                                    std::pair<float, coordonne>res = std::make_pair(pixel[0], getCoord(indiceTab));
+                                    ++indiceTab;
+                                    return res;
+                                });
+    std::sort(pixels.begin(), pixels.end(), 
+            [](const auto& left, const auto& right) {
+                return left.first > right.first;
+            });
+    const std::array<int, 8> diffX = {-1, 0, 1,
+                                      -1,        1,
+                                      -1, 0, 1
+                                    };
+    const std::array<int, 8> diffY = {-1, -1, -1,
+                                      0,          0,
+                                      1, 1,   1
+                                    };
+    const std::array<float, 8> dist = {sqrtf(2), 1,  sqrtf(2),
+                                        1,                 1,
+                                        sqrtf(2), 1, sqrtf(2)
+                                    };
+    for (const auto& pixels : pixels) {
+        coordonne currentCoord = pixels.second;
+        float diffTot = 0;
+        for (int i = 0; i < 8; i++) {
+            int coordX = currentCoord.first + diffX[i];
+            int coordY = currentCoord.second + diffY[i];
+
+            if(coordX < 0 || coordX >= image.getWidth()) continue;
+            if(coordY < 0 || coordY >= image.getHeight()) continue;
+
+            float currentDiff = image[coordX, coordY][0] - image[currentCoord.first, currentCoord.second][0];
+            if(currentDiff >= 0) continue;
+
+            diffTot += currentDiff / dist[i];
+        }
+        diffTot = powf(diffTot, powStreamArea);
+        for (int i = 0; i < 8; i++) {
+            int coordX = currentCoord.first + diffX[i];
+            int coordY = currentCoord.second + diffY[i];
+
+            if(coordX < 0 || coordX >= image.getWidth()) continue;
+            if(coordY < 0 || coordY >= image.getHeight()) continue;
+
+            float currentDiff = image[coordX, coordY][0] - image[currentCoord.first, currentCoord.second][0];
+            if(currentDiff >= 0) continue;
+
+            streamArea.setData(coordX, coordY,
+                                streamArea[coordX, coordY] + streamArea[currentCoord.first, currentCoord.second] * powf(currentDiff / dist[i], powStreamArea) / diffTot);
+            streamArea.setData(coordX, coordY,
+                                glm::vec3(powf(streamArea[coordX, coordY][0], 1/4.0f)));
+        }
+    }
+
+    std::vector<float> valuesStreamArea(image.getWidth() * image.getHeight());
+    std::transform(streamArea.getData().begin(), streamArea.getData().end(), valuesStreamArea.begin(),
+                    [](const auto& p) {
+                        return p[0];
+                    });
+    normalize(valuesStreamArea, streamArea);
+    return streamArea;
+}

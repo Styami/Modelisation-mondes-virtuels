@@ -15,6 +15,7 @@ class ScalarField {
         Image laplacian() const;
         Image blur() const;
         Image smooth() const;
+        Image streamArea(const int powStreamArea) const;
     protected:
         void normalize(const std::vector<float>& pixels, Image& image) const;
         Image&& clamp(Image& image, int valueMin) const;
