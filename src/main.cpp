@@ -1,13 +1,14 @@
 #include "heightField.hpp"
-#include "scalarfield.hpp"
 
 int main() {
-    ScalarField heightfield = ScalarField("data/render.png");//, glm::vec3(0, 0, -10), glm::vec3(10, 10, 100));
-    Image slope = heightfield.streamArea(4);
-    // Image scalarGradBlur = scalarGrad.blur();
-    Image res = ScalarField(slope).blur();
-    Image res1 = ScalarField(res).blur();
-    res.save("streamArea.png");
-    // scalarfield.save("data/test.png");   
+    ScalarField heightfield = ScalarField("data/render.png");
+    ScalarField resBlur = ScalarField(ScalarField(heightfield.blur()).blur());
+    ScalarField resSmooth = ScalarField(ScalarField(heightfield.smooth()).smooth());
+    resBlur.streamArea(5).save("data/streamAreaBlur.png");
+    resBlur.normGradient().save("data/normGradientBlur.png");
+    resBlur.laplacian().save("data/laplacianBlur.png");
+    resSmooth.streamArea(5).save("data/streamAreaSmooth.png");
+    resSmooth.normGradient().save("data/normGradientSmooth.png");
+    resSmooth.laplacian().save("data/laplacianSmooth.png");   
     return 0;
 }
