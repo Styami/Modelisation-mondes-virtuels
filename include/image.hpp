@@ -9,6 +9,7 @@ class Image {
     public:
         Image();
         Image(const int width, const int heigth);
+        Image(const int width, const int height, const glm::vec3& defaultColor);
         Image(const int width, const int heigth, const int nbChannel, const std::vector<glm::vec3>& data);
         Image(const Image& image);
         Image(Image&& image);

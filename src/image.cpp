@@ -21,6 +21,14 @@ Image::Image(const int width, const int heigth) :
     data(width * height, glm::vec3(0))
 {}
 
+Image::Image(const int width, const int height, const glm::vec3& defaultColor) :
+    width(width),
+    height(height),
+    nbChannel(3),
+    data(width * height, defaultColor)
+{}
+
+
 Image::Image(const int width, const int heigth, const int nbChannel, const std::vector<glm::vec3>& data) :
     width(width),
     height(heigth),
@@ -92,19 +100,23 @@ Image Image::normalizeLaplace() const {
     auto [min, max] = std::minmax_element(data.begin(), data.end(), [](const glm::vec3& a, const glm::vec3& b) {
         return a.r < b.r;
     });
-    Image res = Image(width, height);
+    Image res = Image(width, height, glm::vec3(255));
     if(min->r > 0 || max->r < 0) {
         return res.normalize();
     }
+
     for (int j = 0; j < height; j++)
         for (int i = 0; i < width; i++) {
             float currentVal = (*this)[i, j].r;
             if(currentVal < 0) {
-                float newVal = currentVal / min->r;
-                res.setData(i, j, glm::vec3(0, 0, newVal));
+                // Prend l'inverse de la couleur puis soustrait à la couleur blanche
+                float ratio = currentVal / min->r;
+                glm::vec3 newPixel = glm::vec3(1) - (glm::vec3(1) - glm::vec3(0, 0, 1)) * ratio;
+                res.setData(i, j, newPixel);
             } else {
-                float newVal = currentVal / max->r;
-                res.setData(i, j, glm::vec3(newVal, 0, 0));
+                float ratio = currentVal / max->r;
+                glm::vec3 newPixel = glm::vec3(1) - (glm::vec3(1) - glm::vec3(1, 0, 0)) * ratio;
+                res.setData(i, j, newPixel);
             }
         }
     return res;
