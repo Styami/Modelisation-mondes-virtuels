@@ -1,4 +1,5 @@
 #include "image.hpp"
+#include <algorithm>
 #include <cassert>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -75,6 +76,39 @@ Image Image::resize(const int newWidth, const int newHeight) {
     stbi_image_free(res);
     return Image(newWidth, newHeight, nbChannel, newData);
 }
+Image Image::normalize() const {
+    auto [min, max] = std::minmax_element(data.begin(), data.end(), [](const glm::vec3& a, const glm::vec3& b) {
+        return a.r < b.r;
+    });
+    Image res = Image(width, height);
+    for (int j = 0; j < height; j++)
+        for (int i = 0; i < width; i++) {
+            res.setData(i, j, glm::vec3((*this)[i, j].r - min->r) / (max->r - min->r));
+        }
+    return res;
+}
+
+Image Image::normalizeLaplace() const {
+    auto [min, max] = std::minmax_element(data.begin(), data.end(), [](const glm::vec3& a, const glm::vec3& b) {
+        return a.r < b.r;
+    });
+    Image res = Image(width, height);
+    if(min->r > 0 || max->r < 0) {
+        return res.normalize();
+    }
+    for (int j = 0; j < height; j++)
+        for (int i = 0; i < width; i++) {
+            float currentVal = (*this)[i, j].r;
+            if(currentVal < 0) {
+                float newVal = currentVal / min->r;
+                res.setData(i, j, glm::vec3(0, 0, newVal));
+            } else {
+                float newVal = currentVal / max->r;
+                res.setData(i, j, glm::vec3(newVal, 0, 0));
+            }
+        }
+    return res;
+}
 
 void Image::load(const std::string& filename) {
     unsigned char* res = stbi_load(filename.c_str(), &width, &height, &nbChannel, 3);
@@ -86,16 +120,17 @@ void Image::load(const std::string& filename) {
         for (int x = 0; x < width; x++) {
             glm::vec3 color;
             for (int z = 0; z < nbChannel; z++) {
-                color[z] = static_cast<double>(res[z + x * nbChannel + y * width * nbChannel]);
+                color[z] = static_cast<double>(res[z + x * nbChannel + y * width * nbChannel]/255.f);
             }
             data[x + y * width] = color;
         }
     }
+    normalize();
     stbi_image_free(res);
 }
 
-
-void Image::save(const std::string& filename) const {
+void Image::saveLaplace(const std::string& filename) const {
+    Image imgToSave = normalizeLaplace();
     unsigned char* imageChar = new unsigned char[width * height * (nbChannel)];
     for (int x = 0; x < width; x++) {
         for (int y = 0; y < height; y++) 
@@ -104,9 +139,29 @@ void Image::save(const std::string& filename) const {
                     imageChar[z + x * nbChannel + (y * width * nbChannel)] = static_cast<unsigned char>(255); 
                     continue;
                 }
-                float tmpf = (*this)[x, y][z];
-                unsigned char tmp = static_cast<unsigned char>(tmpf);
-                imageChar[z + x * nbChannel + (y * width * nbChannel)] = tmp;
+                float pixel = imgToSave[x, y][z] * 255;
+                unsigned char newPixel = static_cast<unsigned char>(pixel);
+                imageChar[z + x * nbChannel + (y * width * nbChannel)] = newPixel;
+            }
+        
+    }
+    stbi_write_png(filename.c_str(), width, height, nbChannel, imageChar, width * nbChannel);
+    delete [] imageChar;
+}
+
+void Image::save(const std::string& filename) const {
+    Image imgToSave = normalize();
+    unsigned char* imageChar = new unsigned char[width * height * (nbChannel)];
+    for (int x = 0; x < width; x++) {
+        for (int y = 0; y < height; y++) 
+            for (int z = 0; z < nbChannel; z++) {
+                if (z == 3) {
+                    imageChar[z + x * nbChannel + (y * width * nbChannel)] = static_cast<unsigned char>(255); 
+                    continue;
+                }
+                float pixel = imgToSave[x, y][z] * 255;
+                unsigned char newPixel = static_cast<unsigned char>(pixel);
+                imageChar[z + x * nbChannel + (y * width * nbChannel)] = newPixel;
             }
         
     }

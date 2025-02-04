@@ -1,8 +1,7 @@
 #include "scalarfield.hpp"
 #include <algorithm>
 #include <cmath>
-#include <functional>
-#include <glm/geometric.hpp>
+#include <array>
 #include <utility>
 
 ScalarField::ScalarField(const std::string& filename) :
@@ -22,14 +21,6 @@ void ScalarField::save(const std::string& filename) {
     image.save(filename);
 }
 
-void ScalarField::normalize(const std::vector<float>& pixels, Image& image) const {
-    auto [min, max] = std::minmax_element(pixels.begin(), pixels.end());
-    for (int j = 0; j < image.getHeight(); j++)
-        for (int i = 0; i < image.getWidth(); i++) {
-            image.setData(i, j, glm::vec3(255) * (image[i, j] - *min)/(*max - *min));
-        }
-}
-
 Image&& ScalarField::clamp(Image& image, int valueMin) const {
     for (int j = 0; j < image.getHeight(); j++)
         for (int i = 0; i < image.getWidth(); i++) {
@@ -40,38 +31,17 @@ Image&& ScalarField::clamp(Image& image, int valueMin) const {
 }
 
 Image ScalarField::normGradient() const {
-    glm::mat3 gradY = glm::mat3(-1, 0, 1,
-                    -1, 0, 1,
-                    -1, 0, 1
-    );
-    glm::mat3 gradX = glm::mat3(-1, -1, -1,
-                    0, 0, 0,
-                    1, 1, 1
-    );
+    Image res(image.getWidth(), image.getHeight());
 
-    Image tmp(image.getWidth(), image.getHeight());
-    std::vector<float> pixels;
-    pixels.resize(image.getHeight() * image.getWidth());
-
-    for (int y = 1; y < image.getHeight() - 1; y++) 
-        for(int x = 1; x < image.getWidth() - 1; x++) {
-            glm::vec3 newColorX(0, 0, 0);
-            glm::vec3 newColorY(0, 0, 0);
-            for (int i = x - 1; i <= x + 1; i++)
-                for (int j = y - 1; j <= y + 1; j++) {
-                    newColorX += image[i, j] * gradX[i - (x - 1)][j - (y - 1)];
-                    newColorY += image[i, j] * gradY[i - (x - 1)][j - (y - 1)];
-                }
-            
-            glm::vec3 gradient = glm::sqrt(newColorX * newColorX + newColorY * newColorY) ;
-            pixels.push_back(gradient[0]);
-            tmp.setData(x, y,  gradient);
+    for (int y = 0; y < image.getHeight(); y++) 
+        for(int x = 0; x < image.getWidth(); x++) {
+            float gradientRes = gradient(x, y) ;
+            res.setData(x, y,  glm::vec3(gradientRes));
         }
-    normalize(pixels, tmp);
-    return tmp;
+    return res;
 }
 
-glm::vec2 ScalarField::gradient(const int x, const int y) const {
+float ScalarField::gradient(const int x, const int y) const {
     glm::mat3 gradY = glm::mat3(-1, 0, 1,
                     -1, 0, 1,
                     -1, 0, 1
@@ -84,14 +54,14 @@ glm::vec2 ScalarField::gradient(const int x, const int y) const {
     float valueX = 0;
     float valueY = 0;
     for (int j = y - 1; j <= y + 1; j++) {
-        if(j < 0 || j > image.getHeight()) continue;
+        int usingJ = std::clamp(j, 0, image.getHeight() - 1);
         for (int i = x - 1; i <= x + 1; i++) {
-            if(i < 0 || i > image.getWidth()) continue;
-            valueX += image[i, j][0] * gradX[i - (x - 1)][j - (y - 1)];
-            valueY += image[i, j][0] * gradY[i - (x - 1)][j - (y - 1)];
+            int usingI = std::clamp(i, 0, image.getWidth() - 1);
+            valueX += image[usingI, usingJ][0] * gradX[i - (x - 1)][j - (y - 1)];
+            valueY += image[usingI, usingJ][0] * gradY[i - (x - 1)][j - (y - 1)];
         }
     }
-    return glm::normalize(glm::vec2(valueX, valueY));
+    return sqrt(valueX * valueX + valueY * valueY);
 }
 
 Image ScalarField::laplacian() const {
@@ -100,24 +70,22 @@ Image ScalarField::laplacian() const {
                                     0, 1, 0
     );
 
-    Image tmp(image.getWidth(), image.getHeight());
-    std::vector<float> pixels;
-    pixels.resize(image.getHeight() * image.getWidth());
+    Image res(image.getWidth(), image.getHeight());
 
     for (int y = 1; y < image.getHeight() - 1; y++) 
         for(int x = 1; x < image.getWidth() - 1; x++) {
             glm::vec3 newColor(0, 0, 0);
             for (int i = x - 1; i <= x + 1; i++)
                 for (int j = y - 1; j <= y + 1; j++) {
-                    newColor += image[i, j] * laplacianKer[i - (x - 1)][j - (y - 1)];
+                    int usingI = std::clamp(i, 0, image.getWidth() - 1);
+                    int usingJ = std::clamp(j, 0, image.getHeight() - 1);
+                    newColor += image[usingI, usingJ] * laplacianKer[i - (x - 1)][j - (y - 1)];
                 }
                 
-            pixels.push_back(newColor[0]);
-            tmp.setData(x, y, newColor);
+            res.setData(x, y, newColor);
         }
-
-    normalize(pixels, tmp);
-    return tmp;
+    res.normalize();
+    return res;
 }
 
 Image ScalarField::blur() const {
@@ -126,24 +94,22 @@ Image ScalarField::blur() const {
                                     1, 1, 1
     );
 
-    Image tmp(image.getWidth(), image.getHeight());
-    std::vector<float> pixels;
-    pixels.resize(image.getHeight() * image.getWidth());
+    Image res(image.getWidth(), image.getHeight());
 
-    for (int y = 1; y < image.getHeight() - 1; y++) 
-        for(int x = 1; x < image.getWidth() - 1; x++) {
-            glm::vec3 newColor(0, 0, 0);
-            for (int i = x - 1; i <= x + 1; i++)
-                for (int j = y - 1; j <= y + 1; j++) {
-                    newColor += image[i, j] * laplacianKer[i - (x - 1)][j - (y - 1)];
+    for (int y = 0; y < image.getHeight(); y++) 
+        for(int x = 0; x < image.getWidth(); x++) {
+            glm::vec3 newColor = glm::vec3(0);
+            for (int j = y - 1; j <= y + 1; j++) 
+                for (int i = x - 1; i <= x + 1; i++) {
+                    int iTmp = std::clamp(i, 0, image.getWidth() - 1);
+                    int jTmp = std::clamp(j, 0, image.getHeight() - 1);
+                    newColor += image[iTmp, jTmp] * laplacianKer[i - (x - 1)][j - (y - 1)];
                 }
-                
-            pixels.push_back(newColor[0]);
-            tmp.setData(x, y, newColor);
-        }
 
-    normalize(pixels, tmp);
-    return tmp;
+            res.setData(x, y, newColor);
+        }
+    res.normalize();
+    return res;
 }
 
 Image ScalarField::smooth() const {
@@ -152,24 +118,22 @@ Image ScalarField::smooth() const {
                                     4, 4, 4
     );
 
-    Image tmp(image.getWidth(), image.getHeight());
-    std::vector<float> pixels;
-    pixels.resize(image.getHeight() * image.getWidth());
+    Image res(image.getWidth(), image.getHeight());
 
-    for (int y = 1; y < image.getHeight() - 1; y++) 
-        for(int x = 1; x < image.getWidth() - 1; x++) {
-            glm::vec3 newColor(0, 0, 0);
-            for (int i = x - 1; i <= x + 1; i++)
-                for (int j = y - 1; j <= y + 1; j++) {
-                    newColor += image[i, j] * smooth[i - (x - 1)][j - (y - 1)];
+    for (int y = 0; y < image.getHeight(); y++) 
+        for(int x = 0; x < image.getWidth(); x++) {
+            glm::vec3 newColor = glm::vec3(0);
+            for (int j = y - 1; j <= y + 1; j++) 
+                for (int i = x - 1; i <= x + 1; i++) {
+                    int iTmp = std::clamp(i, 0, image.getWidth() - 1);
+                    int jTmp = std::clamp(j, 0, image.getHeight() - 1);
+                    newColor += image[iTmp, jTmp] * smooth[i - (x - 1)][j - (y - 1)];
                 }
                 
-            pixels.push_back(newColor[0]);
-            tmp.setData(x, y, newColor);
+            res.setData(x, y, newColor);
         }
-
-    normalize(pixels, tmp);
-    return tmp;
+    res.normalize();
+    return res;
 }
 
 Image ScalarField::streamArea(const int powStreamArea) const {
@@ -179,7 +143,7 @@ Image ScalarField::streamArea(const int powStreamArea) const {
         std::vector<glm::vec3>(image.getWidth() * image.getHeight(), glm::vec3(1)));
     int indiceTab = 0;
     using coordonne = std::pair<int, int>;
-    std::function<coordonne(int)>  getCoord = [this](const int i) {
+    auto getCoord = [this](const int i) {
         int x = i % image.getWidth();
         int y = (i - x) / image.getWidth();
         return std::make_pair(x, y);
@@ -245,6 +209,6 @@ Image ScalarField::streamArea(const int powStreamArea) const {
                     [](const auto& p) {
                         return p[0];
                     });
-    normalize(valuesStreamArea, streamArea);
+    streamArea.normalize();
     return streamArea;
 }

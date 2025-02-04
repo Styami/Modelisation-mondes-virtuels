@@ -77,8 +77,7 @@ float HeightField::averageSlope(const int x, const int y) const {
         for (int i = x - 1; i <= x + 1; i++) {
             if(i < 0 || i > image.getWidth()) continue;
             nbPixInImage++;
-            glm::vec2 grad = gradient(i, j);
-            res += glm::sqrt(grad.x * grad.x + grad.y * grad.y);
+            res += gradient(i, j);
         }
     }
     return res / nbPixInImage;

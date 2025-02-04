@@ -10,14 +10,13 @@ class ScalarField {
         ScalarField(const Image& image);
         ScalarField(ScalarField&& scalarfield);
         void save(const std::string& filename);
-        glm::vec2 gradient(const int i, const int j) const;
+        float gradient(const int i, const int j) const;
         Image normGradient() const;
         Image laplacian() const;
         Image blur() const;
         Image smooth() const;
         Image streamArea(const int powStreamArea) const;
     protected:
-        void normalize(const std::vector<float>& pixels, Image& image) const;
         Image&& clamp(Image& image, int valueMin) const;
         Image image;
 };
