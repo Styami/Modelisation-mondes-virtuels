@@ -17,9 +17,12 @@ class Image {
         ~Image();
         void load(const std::string& filename);
         void save(const std::string& filename) const;
+        void saveNormGrad(const std::string& filename) const;
         void saveLaplace(const std::string& filename) const;
+        void saveStreamArea(const std::string& filename) const;
         Image normalize() const;
         Image normalizeLaplace() const;
+        Image normalizeStreamArea() const;
         void normalizeSlope();
         Image resize(const int width, const int height);
         const glm::vec3& operator[](const int x, const int y) const;

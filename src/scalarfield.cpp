@@ -89,7 +89,7 @@ Image ScalarField::laplacian() const {
 }
 
 Image ScalarField::blur() const {
-        glm::mat3 laplacianKer = (1 / 9.0f) * glm::mat3(1, 1, 1,
+        glm::mat3 blurKer = glm::mat3(1, 1, 1,
                                     1, 1, 1,
                                     1, 1, 1
     );
@@ -103,7 +103,7 @@ Image ScalarField::blur() const {
                 for (int i = x - 1; i <= x + 1; i++) {
                     int iTmp = std::clamp(i, 0, image.getWidth() - 1);
                     int jTmp = std::clamp(j, 0, image.getHeight() - 1);
-                    newColor += image[iTmp, jTmp] * laplacianKer[i - (x - 1)][j - (y - 1)];
+                    newColor += image[iTmp, jTmp] * blurKer[i - (x - 1)][j - (y - 1)];
                 }
 
             res.setData(x, y, newColor);
@@ -113,9 +113,9 @@ Image ScalarField::blur() const {
 }
 
 Image ScalarField::smooth() const {
-    glm::mat3 smooth = (1/21.f) * glm::mat3(1, 1, 1,
-                                    2, 2, 2,
-                                    4, 4, 4
+    glm::mat3 smooth = glm::mat3(1, 1, 1,
+                                2, 2, 2,
+                                4, 4, 4
     );
 
     Image res(image.getWidth(), image.getHeight());
@@ -137,24 +137,22 @@ Image ScalarField::smooth() const {
 }
 
 Image ScalarField::streamArea(const int powStreamArea) const {
-    Image streamArea(image.getWidth(), 
-        image.getHeight(),
-        3,
-        std::vector<glm::vec3>(image.getWidth() * image.getHeight(), glm::vec3(1)));
+    Image streamArea = Image(image);
+
     int indiceTab = 0;
     using coordonne = std::pair<int, int>;
     auto getCoord = [this](const int i) {
         int x = i % image.getWidth();
-        int y = (i - x) / image.getWidth();
+        int y = floor(i / image.getWidth());
         return std::make_pair(x, y);
     };
     std::vector<std::pair<float, coordonne>> pixels(image.getData().size()); 
     std::transform(image.getData().begin(), image.getData().end(), pixels.begin(),
-                                [&indiceTab, getCoord](const glm::vec3& pixel) {
-                                    std::pair<float, coordonne>res = std::make_pair(pixel[0], getCoord(indiceTab));
-                                    ++indiceTab;
-                                    return res;
-                                });
+                [&indiceTab, &getCoord](const glm::vec3& pixel) {
+                    std::pair<float, coordonne>res = std::make_pair(pixel.r, getCoord(indiceTab));
+                    ++indiceTab;
+                    return res;
+                });
     std::sort(pixels.begin(), pixels.end(), 
             [](const auto& left, const auto& right) {
                 return left.first > right.first;
@@ -171,44 +169,55 @@ Image ScalarField::streamArea(const int powStreamArea) const {
                                         1,                 1,
                                         sqrtf(2), 1, sqrtf(2)
                                     };
-    for (const auto& pixels : pixels) {
-        coordonne currentCoord = pixels.second;
+
+    std::array<float, 8> elevations = {0, 0, 0,
+                                       0,        0,
+                                       0, 0, 0
+                                    };
+
+    std::array<float, 8> deltaHeights = {0, 0, 0,
+                                    0,        0,
+                                    0, 0, 0
+                                    };
+
+    for (const auto& pixel : pixels) {
+        coordonne currentCoord = pixel.second;
         float diffTot = 0;
         for (int i = 0; i < 8; i++) {
-            int coordX = currentCoord.first + diffX[i];
-            int coordY = currentCoord.second + diffY[i];
+            int sidePixCoordX = currentCoord.first + diffX[i];
+            int sidePixCoordY = currentCoord.second + diffY[i];
 
-            if(coordX < 0 || coordX >= image.getWidth()) continue;
-            if(coordY < 0 || coordY >= image.getHeight()) continue;
+            if(sidePixCoordX < 0 || sidePixCoordX >= image.getWidth() ||
+                sidePixCoordY < 0 || sidePixCoordY >= image.getHeight()) continue;
 
-            float currentDiff = image[coordX, coordY][0] - image[currentCoord.first, currentCoord.second][0];
-            if(currentDiff >= 0) continue;
+            deltaHeights[i] = pixel.first - image[sidePixCoordX, sidePixCoordY].r;
+            if(deltaHeights[i] <= 0) continue;
 
-            diffTot += currentDiff / dist[i];
+            float diff = powf(deltaHeights[i] / dist[i], powStreamArea);
+            elevations[i] = diff;
+            diffTot += diff;
         }
-        diffTot = powf(diffTot, powStreamArea);
+        
         for (int i = 0; i < 8; i++) {
-            int coordX = currentCoord.first + diffX[i];
-            int coordY = currentCoord.second + diffY[i];
+            int sidePixCoordX = currentCoord.first + diffX[i];
+            int sidePixCoordY = currentCoord.second + diffY[i];
 
-            if(coordX < 0 || coordX >= image.getWidth()) continue;
-            if(coordY < 0 || coordY >= image.getHeight()) continue;
-
-            float currentDiff = image[coordX, coordY][0] - image[currentCoord.first, currentCoord.second][0];
-            if(currentDiff >= 0) continue;
-
-            streamArea.setData(coordX, coordY,
-                                streamArea[coordX, coordY] + streamArea[currentCoord.first, currentCoord.second] * powf(currentDiff / dist[i], powStreamArea) / diffTot);
-            streamArea.setData(coordX, coordY,
-                                glm::vec3(powf(streamArea[coordX, coordY][0], 1/4.0f)));
+            if(sidePixCoordX < 0 || sidePixCoordX >= image.getWidth() ||
+                sidePixCoordY < 0 || sidePixCoordY >= image.getHeight()) continue;
+            
+            if(deltaHeights[i] <= 0) continue; // skip pour éviter de diviser elevation par un diffTot = 0
+            glm::vec3 streamAreaAdding = streamArea[currentCoord.first, currentCoord.second] * (elevations[i] / diffTot);
+            
+            streamArea.setData(sidePixCoordX, sidePixCoordY,
+                                streamArea[sidePixCoordX, sidePixCoordY]
+                                + streamAreaAdding);
         }
+        elevations = {0, 0, 0,
+                      0,        0,
+                      0, 0, 0
+                    };
     }
 
-    std::vector<float> valuesStreamArea(image.getWidth() * image.getHeight());
-    std::transform(streamArea.getData().begin(), streamArea.getData().end(), valuesStreamArea.begin(),
-                    [](const auto& p) {
-                        return p[0];
-                    });
-    streamArea.normalize();
+
     return streamArea;
 }

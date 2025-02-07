@@ -84,16 +84,31 @@ Image Image::resize(const int newWidth, const int newHeight) {
     stbi_image_free(res);
     return Image(newWidth, newHeight, nbChannel, newData);
 }
+
 Image Image::normalize() const {
     auto [min, max] = std::minmax_element(data.begin(), data.end(), [](const glm::vec3& a, const glm::vec3& b) {
         return a.r < b.r;
     });
-    Image res = Image(width, height);
-    for (int j = 0; j < height; j++)
-        for (int i = 0; i < width; i++) {
-            res.setData(i, j, glm::vec3((*this)[i, j].r - min->r) / (max->r - min->r));
-        }
-    return res;
+    std::vector<glm::vec3> pixels = std::vector<glm::vec3>(width * height);
+    std::transform(data.begin(), data.end(), pixels.begin(),
+                    [min, max](const glm::vec3& pixel) {
+                        return glm::vec3((pixel - min->r) / (max->r - min->r));
+                    });
+    return Image(width, height, 3, pixels);
+}
+
+Image Image::normalizeStreamArea() const {
+    std::vector<glm::vec3> pixels = std::vector<glm::vec3>(width * height);
+    std::transform(getData().begin(), getData().end(), pixels.begin(),[](const glm::vec3& pixel) {
+        return glm::vec3(powf(pixel.r, 1/4.0f));
+    });
+    Image res = Image(width,
+                height,
+                3,
+                pixels
+                );
+
+    return res.normalize();
 }
 
 Image Image::normalizeLaplace() const {
@@ -102,7 +117,7 @@ Image Image::normalizeLaplace() const {
     });
     Image res = Image(width, height, glm::vec3(255));
     if(min->r > 0 || max->r < 0) {
-        return res.normalize();
+        return normalize();
     }
 
     for (int j = 0; j < height; j++)
@@ -141,28 +156,24 @@ void Image::load(const std::string& filename) {
     stbi_image_free(res);
 }
 
+void Image::saveStreamArea(const std::string& filename) const {
+    Image imgToSave = normalizeStreamArea();
+    imgToSave.save(filename);
+}
+
 void Image::saveLaplace(const std::string& filename) const {
     Image imgToSave = normalizeLaplace();
-    unsigned char* imageChar = new unsigned char[width * height * (nbChannel)];
-    for (int x = 0; x < width; x++) {
-        for (int y = 0; y < height; y++) 
-            for (int z = 0; z < nbChannel; z++) {
-                if (z == 3) {
-                    imageChar[z + x * nbChannel + (y * width * nbChannel)] = static_cast<unsigned char>(255); 
-                    continue;
-                }
-                float pixel = imgToSave[x, y][z] * 255;
-                unsigned char newPixel = static_cast<unsigned char>(pixel);
-                imageChar[z + x * nbChannel + (y * width * nbChannel)] = newPixel;
-            }
-        
-    }
-    stbi_write_png(filename.c_str(), width, height, nbChannel, imageChar, width * nbChannel);
-    delete [] imageChar;
+    imgToSave.save(filename);
+}
+
+void Image::saveNormGrad(const std::string& filename) const {
+    Image imgToSave = normalize();
+    imgToSave.save(filename);
 }
 
 void Image::save(const std::string& filename) const {
-    Image imgToSave = normalize();
+    // Image imgToSave = normalize();
+    // Image imgToSave = Image(width, height);
     unsigned char* imageChar = new unsigned char[width * height * (nbChannel)];
     for (int x = 0; x < width; x++) {
         for (int y = 0; y < height; y++) 
@@ -171,7 +182,7 @@ void Image::save(const std::string& filename) const {
                     imageChar[z + x * nbChannel + (y * width * nbChannel)] = static_cast<unsigned char>(255); 
                     continue;
                 }
-                float pixel = imgToSave[x, y][z] * 255;
+                float pixel = (*this)[x, y][z] * 255;
                 unsigned char newPixel = static_cast<unsigned char>(pixel);
                 imageChar[z + x * nbChannel + (y * width * nbChannel)] = newPixel;
             }
