@@ -1,7 +1,8 @@
 #include "heightField.hpp"
 
 int main() {
-    ScalarField heightfield = ScalarField("data/heightmapper.png");
+    HeightField heightfield = HeightField("data/heightmap.png", glm::vec3(-5), glm::vec3(5));
+    heightfield.toObj("Mesh");
     heightfield.save("test.png");
     ScalarField resBlur = ScalarField(ScalarField(heightfield.blur()).blur());
     ScalarField resSmooth = ScalarField(ScalarField(heightfield.smooth()).smooth());
@@ -11,6 +12,6 @@ int main() {
     resBlur.laplacian().saveLaplace("data/laplacianBlur2.png");
     resSmooth.streamArea(4).saveStreamArea("data/streamAreaSmooth2.png");
     resSmooth.normGradient().saveNormGrad("data/normGradientSmooth2.png");
-    resSmooth.laplacian().saveLaplace("data/laplacianSmooth2.png");   
+    resSmooth.laplacian().saveLaplace("data/laplacianSmooth2.png");
     return 0;
 }

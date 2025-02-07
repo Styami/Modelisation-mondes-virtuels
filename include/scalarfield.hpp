@@ -10,7 +10,7 @@ class ScalarField {
         ScalarField(const Image& image);
         ScalarField(ScalarField&& scalarfield);
         void save(const std::string& filename);
-        float gradient(const int i, const int j) const;
+        glm::vec2 gradient(const int i, const int j) const;
         Image normGradient() const;
         Image laplacian() const;
         Image blur() const;

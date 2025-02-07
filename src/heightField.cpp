@@ -1,4 +1,12 @@
 #include "heightField.hpp"
+#include "image.hpp"
+#include <algorithm>
+#include <fstream>
+#include <glm/fwd.hpp>
+#include <glm/geometric.hpp>
+#include <ratio>
+#include <vector>
+
 
 HeightField::HeightField(const std::string& filename, const glm::vec3& min, const glm::vec3& max) :
     ScalarField(filename),
@@ -29,13 +37,11 @@ HeightField::HeightField(HeightField&& heightField) :
 {}
 
 float HeightField::heightGrid(const int x, const int y) const {
-    
     int coorPixX = std::clamp(x, 0, image.getWidth() - 1);
     int coorPixY = std::clamp(y, 0, image.getHeight() - 1);
 
     // auto [minHeight, maxHeight] = std::minmax_element(heights.begin(), heights.end());
-    float normalizeHeight = image[coorPixX, coorPixY].z / 255.f;
-    float height = normalizeHeight * (maxMap.z - minMap.z) - minMap.z;
+    float height = image[coorPixX, coorPixY].r * (maxMap.z - minMap.z);
     return height;
 }
 
@@ -77,8 +83,74 @@ float HeightField::averageSlope(const int x, const int y) const {
         for (int i = x - 1; i <= x + 1; i++) {
             if(i < 0 || i > image.getWidth()) continue;
             nbPixInImage++;
-            res += gradient(i, j);
+            glm::vec2 grad = gradient(i, j);
+            res += glm::length(grad);
         }
     }
     return res / nbPixInImage;
+}
+
+std::vector<glm::vec3> HeightField::makeVerticies() const {
+    std::vector<glm::vec3> res;
+    res.reserve(6 * image.getWidth() * image.getHeight());
+    for (int y = 0; y < image.getHeight() - 1; y++) {
+        for (int x = 0; x < image.getWidth() - 1; x++) {
+            res.push_back(glm::vec3(x, heightGrid(x, y), y));
+            res.push_back(glm::vec3(x + 1, heightGrid(x + 1, y), y));
+            res.push_back(glm::vec3(x, heightGrid(x, y + 1), y + 1));
+            res.push_back(glm::vec3(x, heightGrid(x, y + 1), y + 1));
+            res.push_back(glm::vec3(x + 1, heightGrid(x + 1, y), y));
+            res.push_back(glm::vec3(x + 1, heightGrid(x + 1, y + 1), y + 1));
+        }
+    }
+    return res;
+}
+
+std::vector<HeightField::Triangle> HeightField::makeTriangles(const std::vector<glm::vec3>& verticies) const {
+    std::vector<Triangle> res;
+    res.reserve(verticies.size() / 3);
+    for (int i = 0; i < verticies.size(); i+= 3) {
+        res.push_back({i, i + 1, i + 2});
+    }
+    return res;
+}
+
+std::vector<glm::vec3> HeightField::makeNormales(const std::vector<Triangle>& triangles, const std::vector<glm::vec3>& verticies) const {
+    std::vector<glm::vec3> res;
+    res.reserve(triangles.size());
+    int index = 0;
+    for (const Triangle& triangle : triangles) {
+        res.push_back(triangle.normal(verticies, index));
+        index++;
+    }
+    return res;
+}
+
+void HeightField::toObj(const std::string& filename) const {
+    std::vector<glm::vec3> verticies = makeVerticies();
+    std::vector<Triangle> triangles = makeTriangles(verticies);
+    std::vector<glm::vec3> normales = makeNormales(triangles, verticies);
+
+    std::ofstream file = std::ofstream(filename);
+    if (file.is_open()) {
+        file << "# " << filename << "\n#\no " << filename << "\n\n";
+        for (const glm::vec3& vertex : verticies) {
+            file << "v " << vertex.x << ' ' << vertex.y << ' ' << vertex.z << '\n';
+        }
+
+        file << '\n';
+        for (const glm::vec3& normal : normales) {
+            file << "vn " << normal.x << ' ' << normal.y << ' ' << normal.z << '\n';
+        }
+
+        file << '\n';
+
+        for (const Triangle& triangle : triangles) {
+            file << "f " << triangle.a << "//" << triangle.indexNorm << ' '
+            << triangle.b << "//" << triangle.indexNorm << ' '
+            << triangle.c << "//" << triangle.indexNorm << '\n';
+        }
+
+    }
+    file.close();
 }
