@@ -1,6 +1,8 @@
 #include "image.hpp"
 #include <algorithm>
 #include <cassert>
+#include <glm/fwd.hpp>
+#include <vector>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -42,6 +44,17 @@ Image::Image(const Image& image) :
     nbChannel(image.nbChannel),
     data(image.data.begin(), image.data.end())
 {}
+
+Image& Image::operator=(const Image& other) {
+    if (this == &other) return *this;
+    
+    width = other.width;
+    height = other.height;
+    nbChannel = other.nbChannel;
+    data = other.data;
+    
+    return *this;
+}
 
 Image::Image(const std::string& filename) {
     load(filename);
@@ -100,7 +113,7 @@ Image Image::normalize() const {
 Image Image::normalizeStreamArea() const {
     std::vector<glm::vec3> pixels = std::vector<glm::vec3>(width * height);
     std::transform(getData().begin(), getData().end(), pixels.begin(),[](const glm::vec3& pixel) {
-        return glm::vec3(powf(pixel.r, 1/4.0f));
+        return glm::vec3(powf(pixel.r, 1/4.f));
     });
     Image res = Image(width,
                 height,
@@ -137,6 +150,16 @@ Image Image::normalizeLaplace() const {
     return res;
 }
 
+Image Image::normalizeNormGrad() const {
+    Image imgToSave = normalize();
+    std::vector<glm::vec3> newPixels(width * height);
+    std::transform(imgToSave.getData().begin(), imgToSave.getData().end(), newPixels.begin(),
+                    [](const glm::vec3& pixel) {
+                        return glm::vec3(1) - pixel;
+                    });
+    return Image(width, height, nbChannel, newPixels);
+}
+
 void Image::load(const std::string& filename) {
     unsigned char* res = stbi_load(filename.c_str(), &width, &height, &nbChannel, 3);
     if(res == nullptr) {
@@ -167,13 +190,11 @@ void Image::saveLaplace(const std::string& filename) const {
 }
 
 void Image::saveNormGrad(const std::string& filename) const {
-    Image imgToSave = normalize();
+    Image imgToSave = normalizeNormGrad();
     imgToSave.save(filename);
 }
 
 void Image::save(const std::string& filename) const {
-    // Image imgToSave = normalize();
-    // Image imgToSave = Image(width, height);
     unsigned char* imageChar = new unsigned char[width * height * (nbChannel)];
     for (int x = 0; x < width; x++) {
         for (int y = 0; y < height; y++) 

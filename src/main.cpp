@@ -1,7 +1,7 @@
 #include "heightField.hpp"
 
 int main() {
-    ScalarField heightfield = ScalarField("data/heightmap.png");
+    ScalarField heightfield = ScalarField("data/heightmapper.png");
     heightfield.save("test.png");
     ScalarField resBlur = ScalarField(ScalarField(heightfield.blur()).blur());
     ScalarField resSmooth = ScalarField(ScalarField(heightfield.smooth()).smooth());

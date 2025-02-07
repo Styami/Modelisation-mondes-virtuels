@@ -14,6 +14,7 @@ class Image {
         Image(const Image& image);
         Image(Image&& image);
         Image(const std::string& filename);
+        Image& operator=(const Image& other);
         ~Image();
         void load(const std::string& filename);
         void save(const std::string& filename) const;
@@ -21,6 +22,7 @@ class Image {
         void saveLaplace(const std::string& filename) const;
         void saveStreamArea(const std::string& filename) const;
         Image normalize() const;
+        Image normalizeNormGrad() const;
         Image normalizeLaplace() const;
         Image normalizeStreamArea() const;
         void normalizeSlope();
