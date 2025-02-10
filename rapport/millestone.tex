@@ -1,0 +1,116 @@
+\documentclass[11pt, letterpaper]{article}
+\usepackage[french]{babel}
+\usepackage[a4paper]{geometry}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{titling}
+
+\geometry{
+    top=1.78cm,
+    bottom=1.78cm,
+    left=1.65cm,
+    right=1.65cm
+}
+
+\newcommand{\subtitle}[1]{%
+    \posttitle{%
+        \par\end{center}
+        \begin{center}\large#1\end{center}
+        \vskip0.5cm
+    }%
+}
+
+\title{Modélisation des mondes virtuels : \\
+    Rapport Millestone}
+\author{Bomard Stéphane \\
+        {\tt\small 12006500}}
+
+\begin{document}
+    \maketitle
+    
+    \section{Contexte}
+        Pour la partie dédiée au millestone, nous nous appuierons sur la carte de hauteur affichée ci-dessous.
+        Enfin, la base de code est présente \href{https://github.com/Styami/Modelisation-mondes-virtuels.git}{ici}.
+        \begin{figure}[!h]
+            \centering 
+            \includegraphics[scale=0.1]{data/heightmap.png} 
+            \caption{Carte de référence}
+            \label{fig:ref}
+        \end{figure}\hfill
+        \\
+        La carte utilisée représente du 1081 * 1081 et chacune des cartes présentées aura été normalisée entre 0 et 1.
+        De plus, l'exécution du programme se fait en environs 8 secondes sur une machine équipée d'un CPU AMD Ryzen 7 7840HS.
+
+
+    \section{millestone}
+        Tous les résultats présentés auront subi 2 blur de traitement ou 2 smooth traitement avant les calculs puis normalisés.
+        De plus, il est important de noter que les images présentes ici ont subis différents types d'affinage pour qu'elles soient visibles.
+        On peut notamment citer l'image du stream area qui a subie une $\sqrt[4]{x}$ avant d'être normalisée.
+        
+        \begin{figure}[!h]
+            \centering
+            \begin{subfigure}[a]{0.3\textwidth}
+                \centering
+                \includegraphics[width=\textwidth]{data/laplacianBlur.png}
+                \caption{Laplacian}
+                \label{fig:laplacian_blur}
+            \end{subfigure}
+            \hfill
+            \begin{subfigure}[b]{0.3\textwidth}
+                \centering
+                \includegraphics[width=\textwidth]{data/normGradientBlur.png}
+                \caption{Norme du gradient}
+                \label{fig:gradient_blur}
+            \end{subfigure}
+            \hfill
+            \begin{subfigure}[c]{0.3\textwidth}
+                \centering
+                \includegraphics[width=\textwidth]{data/streamAreaBlur.png}
+                \caption{Stream area (puissance 4)}
+                \label{fig:stream_blur}
+            \end{subfigure}
+            \label{fig:blur_map}
+            \caption{Carte sous blur}
+        \end{figure}
+        
+        \begin{figure}[!h]
+            \begin{subfigure}[a]{0.3\textwidth}
+                \centering
+                \includegraphics[width=\textwidth]{data/laplacianSmooth.png}
+                \caption{Laplacian}
+                \label{fig:laplacian_smooth}
+            \end{subfigure}
+            \hfill
+            \begin{subfigure}[b]{0.3\textwidth}
+                \centering
+                \includegraphics[width=\textwidth]{data/normGradientSmooth.png}
+                \caption{Norme du gradient}
+                \label{fig:gradient_smooth}
+            \end{subfigure}
+            \hfill
+            \begin{subfigure}[c]{0.3\textwidth}
+                \centering
+                \includegraphics[width=\textwidth]{data/streamAreaSmooth.png}
+                \caption{Stream area (puissance 4)}
+                \label{fig:stream_smooth}
+            \end{subfigure}
+            \label{fig:smooth_map}
+            \caption{Carte sous smooth}
+        \end{figure}
+        
+        \break
+        Norme du gradient :
+
+        Plus la couleur vire vers au noir, plus la slope est élevée.
+
+        Stream Area :
+
+        Plus la couleur tends vers le blanc, plus l'aire de drainage est forte.
+
+        Laplacien :
+
+        Lorsque la couleur du laplacien tends vers le bleu, cela implique que ce dernier est négatif et inversement pour la couleur rouge.
+        Enfin, la couleur blanche implique un laplacien proche de 0. 
+        
+\end{document}

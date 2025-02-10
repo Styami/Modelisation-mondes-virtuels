@@ -90,6 +90,25 @@ float HeightField::averageSlope(const int x, const int y) const {
     return res / nbPixInImage;
 }
 
+Image HeightField::thermalErode(const float k) const {
+    Image imgSlope = slope();
+    Image imgLaplace = laplacian();
+    Image imgStreamArea = streamArea(4);
+    Image erodeMap = image;
+
+    for (int step = 0; step < 2; step++) {
+    
+        for (int y = 0; y < imgSlope.getHeight(); y++) {
+            for (int x = 0; x < imgSlope.getWidth(); x++) {
+                float newVal = erodeMap[x, y].r - imgStreamArea[x, y].r * powf(imgSlope[x, y].r, 3) - imgLaplace[x, y].r;
+                erodeMap.setData(x, y, glm::vec3(newVal));
+            }
+        }
+    }
+
+    return erodeMap;
+}
+
 std::vector<glm::vec3> HeightField::makeVerticies() const {
     std::vector<glm::vec3> res;
     res.reserve(6 * image.getWidth() * image.getHeight());

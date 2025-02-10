@@ -1,17 +1,22 @@
 #include "heightField.hpp"
+#include "scalarfield.hpp"
+#include <chrono>
+#include <glm/fwd.hpp>
+#include <iostream>
 
 int main() {
     HeightField heightfield = HeightField("data/heightmap.png", glm::vec3(-5), glm::vec3(5));
-    heightfield.toObj("Mesh");
-    heightfield.save("test.png");
-    ScalarField resBlur = ScalarField(ScalarField(heightfield.blur()).blur());
-    ScalarField resSmooth = ScalarField(ScalarField(heightfield.smooth()).smooth());
-    resSmooth.save("pititTest.png");
-    resBlur.streamArea(4).saveStreamArea("data/streamAreaBlur2.png");
-    resBlur.normGradient().saveNormGrad("data/normGradientBlur2.png");
-    resBlur.laplacian().saveLaplace("data/laplacianBlur2.png");
-    resSmooth.streamArea(4).saveStreamArea("data/streamAreaSmooth2.png");
-    resSmooth.normGradient().saveNormGrad("data/normGradientSmooth2.png");
-    resSmooth.laplacian().saveLaplace("data/laplacianSmooth2.png");
+    auto start = std::chrono::system_clock::now();
+    // HeightField resBlur = HeightField(ScalarField(heightfield.blur()).blur(), glm::vec3(-5), glm::vec3(5));
+    // HeightField resSmooth = HeightField(ScalarField(heightfield.smooth()).smooth(), glm::vec3(-5), glm::vec3(5));
+    // resBlur.streamArea(4).saveStreamArea("data/streamAreaBlur.png");
+    // resBlur.normGradient().saveNormGrad("data/normGradientBlur.png");
+    // resBlur.laplacian().saveLaplace("data/laplacianBlur.png");
+    // resSmooth.streamArea(4).saveStreamArea("data/streamAreaSmooth.png");
+    // resSmooth.normGradient().saveNormGrad("data/normGradientSmooth.png");
+    // resSmooth.laplacian().saveLaplace("data/laplacianSmooth.png");
+    heightfield.thermalErode(0.0001).normalize().save("data/thermalErode.png");
+    double duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start).count();
+    std::cout << "temps d'éxécution : " << duration << " ms.\n";
     return 0;
 }

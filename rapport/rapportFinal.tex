@@ -1,0 +1,79 @@
+\documentclass[11pt, letterpaper]{article}
+\usepackage[french]{babel}
+\usepackage[a4paper]{geometry}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{titling}
+
+\geometry{
+    top=1.78cm,
+    bottom=1.78cm,
+    left=1.65cm,
+    right=1.65cm
+}
+
+\newcommand{\subtitle}[1]{%
+    \posttitle{%
+        \par\end{center}
+        \begin{center}\large#1\end{center}
+        \vskip0.5cm
+    }%
+}
+
+\title{Modélisation des mondes virtuels : \\
+    Rapport final}
+\author{Bomard Stéphane \\
+        {\tt\small 12006500}}
+
+\begin{document}
+    \maketitle
+    
+    \section{Contexte}
+        Pour la partie dédiée à l'érosion, nous nous appuierons sur la carte de hauteur affichée ci-dessous.
+        Enfin, la base de code est présente \href{https://github.com/Styami/Modelisation-mondes-virtuels.git}{ici}.
+        \begin{figure}[!h]
+            \centering 
+            \includegraphics[scale=0.1]{data/heightmap.png} 
+            \caption{Carte de référence}
+            \label{fig:ref}
+        \end{figure}\hfill
+        \\
+        La carte utilisée représente du 1081 * 1081 et chacune des cartes présentées aura été normalisée entre 0 et 1.
+        De plus, l'exécution du programme se fait en environs 2.4 secondes sur une machine équipée d'un CPU AMD Ryzen 7 7840HS.
+        \\
+
+    \section{Érosion}
+        Les résultats présentés seront issus d'une carte de hauteurs ayant subi une hill slope erosion
+        ainsi qu'une stream power érosion avec comme puissance de 4 pour la stream area et une puissance de 3 sur la slope.
+        \pagebreak
+        \begin{figure}[!h]
+            \centering
+            \begin{minipage}{0.35\linewidth}
+                \includegraphics[width=\linewidth]{data/heightmap.png} 
+                \caption{carte d'origine}
+                \label{fig:posTex}
+            \end{minipage}\hfill
+            \begin{minipage}{0.35\linewidth}
+                \includegraphics[width=\linewidth]{data/thermalErode.png}
+                \caption{Large scale stream power érosion}
+                \label{fig:uvTex}
+            \end{minipage}
+            \begin{minipage}{0.45\linewidth}
+                \centering
+                \includegraphics[width=\linewidth]{rendu.png}
+                \caption{rendu sur le logiciel Blender}
+                \label{fig:blender}
+            \end{minipage}
+        \end{figure}
+        
+        On observe que la carte de droite présente des aspérités plus cisaillantes.
+        Toutefois, les rainures ne sont pas assez notables. Les pistes d'améliorations seraient de trouver
+        des puissances pour la stream area ainsi que le slope plus adéquates afin que des rainures plus fortes apparaissent
+        ou de trouver une autre façon de normaliser la carte afin que les résultats soient plus notifiables.
+        
+
+        
+
+        
+\end{document}
